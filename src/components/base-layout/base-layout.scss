@@ -1,0 +1,13 @@
+.base-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__main {
+    margin-top: 32px;
+  }
+  &__footer {
+    margin-top: auto;
+  }
+}
