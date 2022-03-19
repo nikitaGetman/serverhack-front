@@ -1,0 +1,17 @@
+.add-item-form {
+  display: flex;
+  align-items: stretch;
+  &__search {
+    flex-grow: 1;
+  }
+  &__button {
+    margin-left: 12px;
+  }
+  &__empty {
+    display: flex;
+    align-items: center;
+  }
+  &__empty-text {
+    // color: black;
+  }
+}

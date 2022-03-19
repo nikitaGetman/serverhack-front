@@ -1,0 +1,29 @@
+.settings {
+  &__footer {
+    margin-top: 16px;
+    display: flex;
+    width: 100%;
+    justify-content: end;
+  }
+
+  & .ant-collapse-header {
+    padding: 8px 0 !important;
+    font-weight: bold;
+    // justify-content: end;
+    // flex-direction: row-reverse;
+    &:hover {
+      text-decoration: underline;
+    }
+
+    & > div > span {
+      //   margin: 0 0 0 12px !important;
+    }
+  }
+  & .ant-collapse-content-box {
+    padding: 8px 0 !important;
+  }
+
+  .ant-form-item {
+    margin-bottom: 12px !important;
+  }
+}

@@ -1,0 +1,41 @@
+.suppliers-list {
+  &__filter {
+    margin-bottom: 12px;
+  }
+  &__row {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: baseline;
+    width: 100%;
+    & > span {
+      margin-right: 12px;
+    }
+  }
+  &__select {
+    flex-grow: 1;
+    &:not(:last-child) {
+      margin-right: 12px;
+    }
+  }
+}
+
+.supplier {
+  border: 1px solid #69c0ff;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+
+  &__row {
+    display: flex;
+    align-items: center;
+  }
+  &__label {
+    margin-right: 8px;
+  }
+  &__value {
+    font-weight: 500;
+  }
+  &__name {
+    font-size: 16px;
+  }
+}

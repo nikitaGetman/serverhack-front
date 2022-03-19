@@ -5,7 +5,11 @@
   align-items: center;
 
   &__main {
-    margin-top: 32px;
+    margin-top: 24px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 48px;
   }
   &__footer {
     margin-top: auto;
