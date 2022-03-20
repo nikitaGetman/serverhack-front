@@ -5,12 +5,13 @@ import useFetch from '../../hooks/useFetch';
 import { Button, Space, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 // import { DownOutlined } from '@ant-design/icons';
-import { SettingOutlined, DownloadOutlined } from '@ant-design/icons';
+import { SettingOutlined, DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 
 import './dashboard.scss';
 import { AddItemForm } from '../../components/add-item-form/add-item-form';
 import { SuppliersList } from '../../components/suppliers-list/suppliers-list';
 import { SettingsModal } from '../../components/settings/settings';
+import { Statistic } from '../../components/statistic/statistic';
 
 const empty = <span className="dashboard__empty-cell">В обработке...</span>;
 const columns: ColumnsType<any> = [
@@ -88,7 +89,9 @@ export const DashboardPage: FC = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [isSuppliersListVisible, setIsSuppliersListVisible] = useState(false);
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const [isStatisticVisible, setIsStatisticVisible] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<any>([]);
 
   const formatItemsResponse = useCallback(
     (response) => {
@@ -115,6 +118,8 @@ export const DashboardPage: FC = () => {
 
       setRawData(categories);
       setData(dataItems);
+
+      fillDataItems(dataItems);
     },
     [setData, setRawData]
   );
@@ -123,6 +128,67 @@ export const DashboardPage: FC = () => {
     fetchItemsRequest.fetch().then(formatItemsResponse);
     // eslint-disable-next-line
   }, []);
+
+  const fillDataItems = (dataItems: any) => {
+    try {
+      const ids = dataItems.reduce((acc: any, { children }: any) => [...acc, ...children.map(({ id }: any) => id)], []);
+
+      if (ids.length === 0) return;
+
+      let index = 0;
+      const interval = setInterval(() => {
+        const currentId = ids[index++];
+        if (currentId === undefined) {
+          clearInterval(interval);
+          return;
+        }
+        getSuppliersByItemId({ id: currentId }).then((res) => {
+          const { data } = res;
+
+          let statistic = data.reduce(
+            (acc: any, supp: any) => {
+              if (supp.status === 'ACTIVE') return { ...acc, activeSuppliers: (acc.activeSuppliers || 0) + 1 };
+              if (supp.status !== 'ACTIVE') return { ...acc, unreliableSupplier: (acc.unreliableSupplier || 0) + 1 };
+              // if (supp.status === 'ACTIVE') return { ...acc, activeSuppliers: (acc.activeSuppliers || 0) + 1 };
+              // if (supp.status === 'ACTIVE') return { ...acc, activeSuppliers: (acc.activeSuppliers || 0) + 1 };
+            },
+            {
+              activeSuppliers: null,
+              reliableSuppliers: null,
+              unverifiedSuppliers: 0,
+              unreliableSupplier: null,
+            }
+          );
+
+          if (
+            statistic.reliableSuppliers === null &&
+            statistic.activeSuppliers !== null &&
+            statistic.unreliableSupplier !== null
+          ) {
+            statistic.reliableSuppliers = statistic.activeSuppliers - statistic.unreliableSupplier;
+          }
+
+          // if(statistic.unreliableSupplier === null && statistic.activeSuppliers !== null && statistic.)
+
+          setData((oldData: any) => {
+            const newData = oldData.reduce((acc: any, category: any) => {
+              const newChilds = category.children.reduce((accItems: any, item: any) => {
+                if (item.id === currentId) return [...accItems, { ...item, ...statistic }];
+                return [...accItems, item];
+              }, []);
+
+              return [...acc, { ...category, children: newChilds }];
+            }, []);
+
+            return newData;
+          });
+        });
+      }, 500);
+    } catch (e) {
+      console.log('some error');
+      console.log(e);
+    }
+  };
 
   const handleRowItemClick = useCallback(
     (id: any) => {
@@ -185,6 +251,13 @@ export const DashboardPage: FC = () => {
     download('data.xlsx');
   }, []);
 
+  const openStatisticMenu = useCallback(() => {
+    setIsStatisticVisible(true);
+  }, [setIsStatisticVisible]);
+  const closeStatisticMenu = useCallback(() => {
+    setIsStatisticVisible(false);
+  }, [setIsStatisticVisible]);
+
   const footer = useCallback(
     () => (
       <Space>
@@ -196,6 +269,19 @@ export const DashboardPage: FC = () => {
     ),
     [downloadSuppliers]
   );
+
+  const handleExpand = useCallback(
+    (expanded, record) => {
+      const { key } = record;
+      const newExpanded = expanded ? [...expandedRowKeys, key] : expandedRowKeys.filter((s: any) => s !== key);
+      setExpandedRowKeys(newExpanded);
+    },
+    [setExpandedRowKeys, expandedRowKeys]
+  );
+
+  useEffect(() => {
+    setExpandedRowKeys(filteredData.map(({ key }: any) => key));
+  }, [filteredData]);
 
   return (
     <div className="dashboard">
@@ -214,6 +300,14 @@ export const DashboardPage: FC = () => {
         >
           Настройки
         </Button>
+        <Button
+          className="dashboard__settings-button"
+          type="primary"
+          icon={<BarChartOutlined />}
+          onClick={openStatisticMenu}
+        >
+          Статистика
+        </Button>
       </div>
       <SettingsModal
         visible={isSettingsVisible}
@@ -221,11 +315,12 @@ export const DashboardPage: FC = () => {
         onSubmit={handleAddItemSubmit}
         search={search}
       />
+      <Statistic visible={isStatisticVisible} onCLose={closeStatisticMenu} />
 
       <Table
         columns={columns}
         dataSource={filteredData}
-        pagination={{ position: [] }}
+        pagination={false}
         scroll={{ y: '75vh' }}
         bordered
         size="small"
@@ -239,10 +334,10 @@ export const DashboardPage: FC = () => {
           },
         })}
         expandable={{
-          defaultExpandAllRows: true,
-          showExpandColumn: true,
           expandRowByClick: true,
+          expandedRowKeys,
           rowExpandable: (record) => !record.label,
+          onExpand: handleExpand,
         }}
         rowSelection={{ selectedRowKeys, onChange: onSelectChange, checkStrictly: false }}
         footer={selectedRowKeys.length ? footer : undefined}

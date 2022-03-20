@@ -24,18 +24,37 @@
   border-radius: 8px;
   padding: 8px;
   margin-bottom: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 
   &__row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
   }
   &__label {
     margin-right: 8px;
+    font-weight: 300;
   }
   &__value {
     font-weight: 500;
   }
   &__name {
+    font-weight: 600;
     font-size: 16px;
+    margin-right: 60px;
+  }
+  &__status {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    .ant-tag {
+      margin-right: 0 !important;
+      font-size: 10px !important;
+    }
+  }
+  &__reviews {
+    margin-top: 8px;
+    margin-right: auto;
   }
 }

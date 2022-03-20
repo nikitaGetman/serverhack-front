@@ -1,5 +1,5 @@
 import React, { FC, memo, useCallback, useMemo, useState } from 'react';
-import { Checkbox, Drawer, Empty, Select, Space, Spin } from 'antd';
+import { Button, Checkbox, Drawer, Empty, Select, Space, Spin, Tag } from 'antd';
 import './suppliers-list.scss';
 
 const { Option } = Select;
@@ -13,11 +13,19 @@ type Props = {
 export const SuppliersList: FC<Props> = memo(({ onClose, visible, suppliers, loading }) => {
   const [filter, setFilter] = useState('');
   const [type, setType] = useState('');
-  const filteredSuppliers = useMemo(() => {
-    if (!filter && !type) return suppliers;
 
-    return suppliers;
-  }, [suppliers, filter, type]);
+  const uniqueSuppliers = useMemo(() => {
+    return suppliers.reduce((acc: any, supplier: any) => {
+      if (acc.find((s: any) => s.inn === supplier.inn)) return acc;
+
+      return [...acc, supplier];
+    }, []);
+  }, [suppliers]);
+  const filteredSuppliers = useMemo(() => {
+    if (!filter && !type) return uniqueSuppliers;
+
+    return uniqueSuppliers;
+  }, [uniqueSuppliers, filter, type]);
 
   const handleChangeFIlter = useCallback(
     (value) => {
@@ -35,7 +43,6 @@ export const SuppliersList: FC<Props> = memo(({ onClose, visible, suppliers, loa
   return (
     <Drawer title="Поставщики" placement="right" onClose={onClose} visible={visible} width="30vw">
       {loading && <Spin />}
-      {!suppliers.length && !loading && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
 
       <div className="suppliers-list__filter">
         <div className="suppliers-list__row">
@@ -57,21 +64,41 @@ export const SuppliersList: FC<Props> = memo(({ onClose, visible, suppliers, loa
         <Checkbox onChange={handleTypeChange}>Только прямые поставщики</Checkbox>
       </div>
 
-      {filteredSuppliers.map((supplier: any, index: number) => (
-        <SupplierCard {...supplier} key={index} />
-      ))}
+      {!loading && (
+        <>
+          {!suppliers.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+
+          {filteredSuppliers.map((supplier: any, index: number) => (
+            <SupplierCard {...supplier} key={index} />
+          ))}
+        </>
+      )}
     </Drawer>
   );
 });
 
-const SupplierCard: FC = ({ name, inn, contacts, status, capitalization, created_at, debet, credit }: any) => {
+const SupplierCard: FC = ({ name, inn, contacts, status, capitalization, created_at, debet, credit, ...rest }: any) => {
+  const date = useMemo(() => new Date(parseInt(created_at)).toLocaleDateString(), [created_at]);
+
+  console.log(rest);
+
+  const getReviews = useCallback(() => {
+    const query = `${name} ИНН ${inn} отзывы`;
+    window.open(`https://yandex.ru/search/?text=${query}`, '_blank');
+    // eslint-disable-next-line
+  }, []);
+
   return (
     <div className="supplier">
-      {name && (
-        <div className="supplier__row">
-          <div className="supplier__value supplier__name">{name}</div>
-        </div>
-      )}
+      <div className="supplier__status">
+        {status === 'ACTIVE' && <Tag color="green">Действующая</Tag>}
+        {status === 'LIQUIDATING' && <Tag color="volcano">Ликвидируется</Tag>}
+        {status === 'LIQUIDATED' && <Tag color="volcano">Ликвидирована</Tag>}
+        {status === 'BANKRUPT' && <Tag color="volcano">Банкротство</Tag>}
+        {status === 'REORGANIZING' && <Tag color="volcano">Реорганизация</Tag>}
+      </div>
+
+      {name && <div className="supplier__name">{name}</div>}
       {inn && (
         <div className="supplier__row">
           <div className="supplier__label">ИНН:</div>
@@ -79,27 +106,24 @@ const SupplierCard: FC = ({ name, inn, contacts, status, capitalization, created
         </div>
       )}
 
-      <div className="supplier__row">
-        <div className="supplier__label">Контакты:</div>
-        <div className="supplier__value">{contacts || '-'}</div>
-      </div>
-
-      {status && (
+      {created_at && (
         <div className="supplier__row">
-          <div className="supplier__label">Статус:</div>
-          <div className="supplier__value">{status}</div>
+          <div className="supplier__label">Дата создания:</div>
+          <div className="supplier__value">{date}</div>
         </div>
       )}
+
+      {contacts && (
+        <div className="supplier__row">
+          <div className="supplier__label">Контакты:</div>
+          <div className="supplier__value">{contacts}</div>
+        </div>
+      )}
+
       {capitalization && (
         <div className="supplier__row">
           <div className="supplier__label">Капитализация:</div>
           <div className="supplier__value">{capitalization}</div>
-        </div>
-      )}
-      {created_at && (
-        <div className="supplier__row">
-          <div className="supplier__label">Дата создания:</div>
-          <div className="supplier__value">{created_at}</div>
         </div>
       )}
       {debet && (
@@ -114,6 +138,10 @@ const SupplierCard: FC = ({ name, inn, contacts, status, capitalization, created
           <div className="supplier__value">{credit}</div>
         </div>
       )}
+
+      <Button type="link" size="small" onClick={getReviews} className="supplier__reviews">
+        Смотреть отзывы
+      </Button>
     </div>
   );
 };

@@ -53,7 +53,9 @@ export const AddItemForm: FC<Props> = ({ onAdd, onSelect, options, loading = fal
     },
     [onSelect]
   );
-
+  const handleClear = useCallback(() => {
+    onSelect('');
+  }, [onSelect]);
   const handleSearch = useCallback(
     (value) => {
       setSearch(value);
@@ -81,6 +83,7 @@ export const AddItemForm: FC<Props> = ({ onAdd, onSelect, options, loading = fal
         className="add-item-form__search"
         dropdownClassName="add-item-form__search-dropdown"
         options={validOptions}
+        onClear={handleClear}
         onSelect={handleChange}
         onSearch={handleSearch}
         filterOption={(inputValue, option) => option!.value.toLowerCase().includes(inputValue.toLowerCase())}
